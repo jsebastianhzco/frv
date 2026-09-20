@@ -1,0 +1,27 @@
+name: PHP and MySQL checks
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test-only-password
+          MYSQL_DATABASE: frv_test_ci
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -ptest-only-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: pdo_mysql, zip
+      - run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php tests/integration.php && php tests/concurrency.php
+        env:
+          FRV_TEST_DATABASE: frv_test_ci
+          FRV_TEST_USER: root
+          FRV_TEST_PASSWORD: test-only-password

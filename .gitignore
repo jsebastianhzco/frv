@@ -1,0 +1,4 @@
+/config/database.php
+/vendor/
+/.env
+*.log
